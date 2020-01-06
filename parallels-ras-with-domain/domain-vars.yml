@@ -1,0 +1,12 @@
+---
+dmzInternalIP: "{| findStepById('vm1').result.outputs.internalIPAddress |}"
+dmzDomainName: "{| vars.dmzDomainName |}"
+dmzDomainUser: "{| vars.dmzDomainName + '\\\\' + vars.dmzAdminUser |}"
+dmzDomainPassword: "{| vars.dmzAdminPassword |}"
+dmzSafeModePassword: "{| vars.dmzSafeModePassword |}"
+
+lanInternalIP: "{| findStepById('vm2').result.outputs.internalIPAddress |}"
+lanDomainName: "{| vars.lanDomainName |}"
+lanDomainUser: "{| vars.lanDomainName + '\\\\' + vars.lanAdminUser |}"
+lanDomainPassword: "{| vars.lanAdminPassword |}"
+lanSafeModePassword: "{| vars.lanSafeModePassword |}"

@@ -1,0 +1,114 @@
+---
+- name: DMZ Domain Controller
+  hosts: dmzdc
+  tasks:
+    - name: Domain
+      win_domain:
+        dns_domain_name: "{{ dmzDomainName }}"
+        safe_mode_password: "{{ dmzSafeModePassword }}"
+      register: dmz_domain_result
+    - name: Reboot
+      win_reboot:
+        reboot_timeout: 1800
+      when: dmz_domain_result.reboot_required
+    - name: WinFeature
+      win_feature:
+        name: RSAT-ADDS
+        include_sub_features: yes
+        include_management_tools: yes
+        state: present
+
+- name: LAN Domain Controller
+  hosts: landc
+  tasks:
+    - name: Domain
+      win_domain:
+        dns_domain_name: "{{ lanDomainName }}"
+        safe_mode_password: "{{ lanSafeModePassword }}"
+      register: lan_domain_result
+    - name: Reboot
+      win_reboot:
+        reboot_timeout: 1800
+      when: lan_domain_result.reboot_required
+    - name: WinFeature
+      win_feature:
+        name: RSAT-ADDS
+        include_sub_features: yes
+        include_management_tools: yes
+        state: present
+
+- name: RDSH LAN Domain Member
+  hosts: rdsh
+  tasks:
+    - name: Set DNS Servers
+      win_dns_client:
+        adapter_names: "*"
+        ipv4_addresses:
+          - "{{ lanInternalIP }}"
+    - name: Domain Member
+      win_domain_membership:
+        dns_domain_name: "{{ lanDomainName }}"
+        domain_admin_user: "{{ lanDomainUser }}"
+        domain_admin_password: "{{ lanDomainPassword }}"
+        state: domain
+      register: rdsh_member_result
+    - name: Reboot
+      win_reboot:
+      when: rdsh_member_result.reboot_required
+
+- name: Write Local Scripts
+  hosts: localhost
+  tasks:
+    - name: Write domain forwarder script
+      copy:
+        dest: ./DomainForwarder.ps1
+        content: |-
+          param(
+            [string]$MasterServers,
+            [string]$DomainName
+          )
+          $ErrorActionPreference = "Stop"
+          $ExistingForwarder = (gwmi -Namespace root\MicrosoftDNS -Class MicrosoftDNS_Zone -Filter "ZoneType = 4" | Select -Property @{n='Name';e={$_.ContainerName}}, @{n='DsIntegrated';e={$_.DsIntegrated}}, @{n='MasterServers';e={([string]::Join(',', $_.MasterServers))}}, @{n='AllowUpdate';e={$_.AllowUpdate}} | Where-Object {$_.MasterServers -eq $MasterServers -and $_.Name -eq $DomainName})
+          If (-not $ExistingForwarder) {
+            Add-DnsServerConditionalForwarderZone -MasterServers $MasterServers -Name $DomainName -UseRecursion $true -ErrorAction "Stop"
+          }
+    - name: Write domain trust script
+      copy:
+        dest: ./DomainTrust.ps1
+        content: |-
+          param(
+            [string]$RemoteDomain,
+            [string]$RemoteAdmin,
+            [string]$RemotePassword,
+            [string]$TrustDirection
+          )
+          $ErrorActionPreference = "Stop"
+          Import-Module C:\Windows\Temp\ADTrust.ps1 -Verbose
+          $ExistingTrust = Get-ADTrust -Filter {Target -eq $RemoteDomain}
+          If (-not $ExistingTrust) {
+            New-ADDomainTrust -RemoteDomain $RemoteDomain -RemoteAdmin $RemoteAdmin -RemotePassword $RemotePassword -TrustDirection $TrustDirection -ErrorAction "Stop"
+          }
+
+- name: Domain Forwarder (DMZ -> LAN)
+  hosts: dmzdc
+  tasks:
+    - name: Domain Forwarder  (DMZ -> LAN)
+      script: "./DomainForwarder.ps1 {{ lanInternalIP }} {{ lanDomainName }}"
+
+- name: Domain Forwarder (DMZ <- LAN)
+  hosts: landc
+  tasks:
+    - name: Domain Forwarder (DMZ <- LAN)
+      script: "./DomainForwarder.ps1 {{ dmzInternalIP }} {{ dmzDomainName }}"
+    
+- name: Domain Trust
+  hosts: landc
+  tasks:
+    - name: Download ADTrust.ps1
+      win_get_url: 
+        url: "https://gallery.technet.microsoft.com/scriptcenter/AD-Trust-ff0ac3b6/file/67364/1/ADTrust.ps1"
+        dest: "C:\\Windows\\Temp\\ADTrust.ps1"
+        force: false
+    - name: Execute DomainTrust.ps1
+      script: "./DomainTrust.ps1 {{ dmzDomainName }} {{ dmzDomainUser }} {{ dmzDomainPassword }} Outbound"
+  

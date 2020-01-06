@@ -1,0 +1,146 @@
+---
+$schema: >-
+  https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#
+contentVersion: 1.0.0.0
+parameters:
+  location:
+    type: string
+    metadata:
+      description: Location of the deployment of the public IP address
+  name:
+    type: string
+    metadata:
+      description: Name of the Virtual Machine
+  computerName:
+    type: string
+    metadata:
+      description: Windows computer name
+  size:
+    type: string
+    metadata:
+      description: Size of the Virtual Machine
+  publisher:
+    type: string
+    metadata:
+      description: Publisher of the image
+  offer:
+    type: string
+    metadata:
+      description: Offer of the image
+  sku:
+    type: string
+    metadata:
+      description: SKU of the image
+  version:
+    type: string
+    metadata:
+      description: Version of the image
+  adminUsername:
+    type: string
+    metadata:
+      description: Username for the Virtual Machine
+  adminPassword:
+    type: string
+    metadata:
+      description: Password for the Virtual Machine
+  networkInterfaceName:
+    type: string
+    metadata:
+      description: Name of the Network Interface for the Virtual Machine
+  bootstrapAnsibleRemoting:
+    type: bool
+    metadata:
+      description: Determines whether to setup Ansible Remoting via a script extension on this virtual machine
+  primary:
+    type: bool
+    metadata:
+      description: Determines whether this is a primary Network Interface on a Virtual Machine
+  virtualNetworkName:
+    type: string
+    metadata:
+      description: Name of the Virtual Network for the Network Interface
+  subnetName:
+    type: string
+    metadata:
+      description: Name of the subnet for the Network Interface
+  ipAddressName:
+    type: string
+    metadata:
+      description: Name of the public IP address for the Network Interface
+  securityGroupName:
+    type: string
+    metadata:
+      description: Name of the Network Security Group for the Network Interface
+variables: {}
+resources:
+  - name: "[ parameters('networkInterfaceName') ]"
+    apiVersion: '2018-08-01'
+    type: "Microsoft.Network/networkInterfaces"
+    location: "[ parameters('location') ]"
+    properties:
+      ipConfigurations:
+      - name: ipconfig1
+        properties:
+          primary: "[ parameters('primary') ]"
+          privateIPAllocationMethod: Dynamic
+          subnet:
+            id: "[ resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')) ]"
+          publicIPAddress:
+            id: "[ resourceId('Microsoft.Network/publicIPAddresses', parameters('ipAddressName')) ]"
+      networkSecurityGroup:
+          id: "[ resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupName')) ]"
+  - name: '[ parameters(''name'') ]'
+    type: Microsoft.Compute/virtualMachines
+    apiVersion: '2018-06-01'
+    location: '[ parameters(''location'') ]'
+    dependsOn:
+          - '[ concat(''Microsoft.Network/networkInterfaces/'', parameters(''networkInterfaceName'')) ]'
+    properties:
+      hardwareProfile:
+        vmSize: '[ parameters(''size'') ]'
+      storageProfile:
+        imageReference:
+          publisher: '[ parameters(''publisher'') ]'
+          offer: '[ parameters(''offer'') ]'
+          sku: '[ parameters(''sku'') ]'
+          version: '[ parameters(''version'') ]'
+        osDisk:
+          osType: Windows
+          createOption: FromImage
+          caching: ReadWrite
+      osProfile:
+        computerName: '[ parameters(''computerName'') ]'
+        adminUsername: '[ parameters(''adminUsername'') ]'
+        adminPassword: '[ parameters(''adminPassword'') ]'
+        windowsConfiguration:
+          provisionVMAgent: true
+          enableAutomaticUpdates: false
+      networkProfile:
+        networkInterfaces:
+          - id: >-
+              [resourceId('Microsoft.Network/networkInterfaces',
+              parameters('networkInterfaceName'))]
+            properties:
+              primary: true
+    resources:
+      - apiVersion: '2018-06-01'
+        condition: "[ parameters('bootstrapAnsibleRemoting') ]"
+        type: Microsoft.Compute/virtualMachines/extensions
+        name: '[ concat(parameters(''name''), ''/ConfigureRemotingForAnsible'') ]'
+        location: '[ parameters(''location'') ]'
+        dependsOn:
+          - '[ concat(''Microsoft.Compute/virtualMachines/'', parameters(''name'')) ]'
+        properties:
+          publisher: Microsoft.Compute
+          type: CustomScriptExtension
+          typeHandlerVersion: '1.9'
+          autoUpgradeMinorVersion: true
+          settings:
+            fileUris:
+              - 'https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1'
+            commandToExecute: 'powershell -NoProfile -ExecutionPolicy Unrestricted -File ConfigureRemotingForAnsible.ps1 -EnableCredSSP -ForceNewSSLCert'  
+outputs:
+  internalIPAddress:
+    type: string
+    value: '[reference(resourceId(''Microsoft.Network/networkInterfaces'', parameters(''networkInterfaceName''))).ipConfigurations[0].properties.privateIPAddress]'
+    

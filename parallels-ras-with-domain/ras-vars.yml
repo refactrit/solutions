@@ -1,0 +1,28 @@
+---
+adminServer: "{| findStepById('vm1').properties.variables.hostname |}"
+dmzDomainName: "{| vars.dmzDomainName |}"
+dmzAdminUser: "{| vars.dmzAdminUser |}"
+dmzAdminPassword: "{| vars.dmzAdminPassword |}"
+lanDomainName: "{| vars.lanDomainName |}"
+lanAdminUser: "{| vars.lanAdminUser |}"
+lanAdminPassword: "{| vars.lanAdminPassword |}"
+
+rasGroupName: "{| vars.rasGroupName |}"
+secureClientGateways:
+  - "{| findStepById('vm1').properties.variables.hostname |}"
+publishingAgents: 
+  - "{| findStepById('vm1').properties.variables.hostname |}"
+sessionHosts: "{| findStepsByTag('rdsh') | json_query('[*].properties.variables.hostname') |}"
+#sessionHosts:
+#  - "{| findStepById('vm3').properties.variables.hostname |}"
+
+licenseEmail: "{| vars.licenseEmail |}"
+licensePassword: "{| vars.licensePassword |}"
+licenseKey: "{| vars.licenseKey |}"
+
+smtpServer: "{| vars.smtpServer |}"
+smtpUsername: "{| vars.smtpUsername |}"
+smtpPassword: "{| vars.smtpPassword |}"
+smtpRequireAuth: "{| vars.smtpRequireAuth |}"
+smtpSenderAddress: "{| vars.smtpSenderAddress |}"
+smtpUseTLS: "{| vars.smtpUseTLS |}"
