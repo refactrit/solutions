@@ -1,0 +1,11 @@
+---
+- ParameterKey: Name
+  ParameterValue: '{| vars.name |}'
+- ParameterKey: VpcId
+  ParameterValue: '{| vars.vpcId |}'
+- ParameterKey: SubnetId
+  ParameterValue: '{| vars.subnetId |}'
+- ParameterKey: InternetGatewayId
+  ParameterValue: '{| vars.internetGatewayId |}'
+- ParameterKey: DestinationCidrBlock
+  ParameterValue: '{| vars.destinationCidrBlock |}'

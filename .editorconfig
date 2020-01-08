@@ -1,0 +1,17 @@
+root = true
+
+[*]
+end_of_line = lf
+
+[*.{js,html,css,less}]
+indent_style = tab
+indent_size = tab
+tab_width = 4
+
+[*.{py,yml,yaml}]
+indent_style = space
+indent_size = tab
+tab_width = 2
+
+[*.{ps1,bat}]
+end_of_line = crlf

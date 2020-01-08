@@ -1,0 +1,5 @@
+---
+- ParameterKey: Name
+  ParameterValue: '{| vars.name |}'
+- ParameterKey: AddressSpace
+  ParameterValue: '{| vars.addressSpace |}'

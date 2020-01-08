@@ -1,0 +1,7 @@
+---
+- ParameterKey: Name
+  ParameterValue: '{| vars.name |}'
+- ParameterKey: VpcId
+  ParameterValue: '{| vars.vpcId |}'
+- ParameterKey: AddressSpace
+  ParameterValue: '{| vars.addressSpace |}'

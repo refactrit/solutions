@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  "Creates an AWS Elastic Network Interface"
+Parameters: 
+  Name: 
+    Type: String
+    Description: Name of the network interface
+  SubnetId:
+    Type: String
+    Description: ID of the subnet for the network interface
+  SecurityGroupId:
+    Type: String
+    Description: ID of the security group for the network interface
+Resources:
+  networkInterface:
+    Type: AWS::EC2::NetworkInterface
+    Properties:
+      SubnetId:
+        Ref: SubnetId
+      GroupSet:
+        - Ref: SecurityGroupId
+      Tags:
+        - Key: Name
+          Value:
+            Ref:
+              Name
+Outputs:
+  id:
+    Description: id of the network interface
+    Value:
+      Ref: networkInterface

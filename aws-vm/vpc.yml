@@ -1,0 +1,26 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  "Creates an AWS virtual private cloud (VPC)"
+Parameters:
+  Name: 
+    Type: String
+    Description: Name of the VPC
+  AddressSpace:
+    Type: String
+    Description: Address space for the VPC
+Resources:
+  virtualNetwork:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock:
+        Ref: AddressSpace
+      Tags:
+        - Key: Name
+          Value:
+            Ref: Name
+Outputs:
+  id:
+    Description: id of the VPC
+    Value:
+      Ref: virtualNetwork

@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  "Creates an AWS EC2 Route Table with a Route to an Internet Gateway"
+Parameters: 
+  Name: 
+    Type: String
+    Description: Name of the Internet Gateway
+  VpcId:
+    Type: String
+    Description: ID of the VPC network
+  SubnetId:
+    Type: String
+    Description: ID of the subnet for the route table association
+  InternetGatewayId:
+    Type: String
+    Description: ID of the Internet Gateway for the route
+  DestinationCidrBlock:
+    Type: String
+    Description: CIDR block for the Internet Gateway route
+Resources:
+  routeTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VpcId
+      Tags:
+        - Key: Name
+          Value:
+            Ref: Name
+  subnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn: routeTable
+    Properties:
+      RouteTableId:
+        Ref: routeTable
+      SubnetId:
+        Ref: SubnetId
+  internetGatewayVPCRoute:
+    Type: AWS::EC2::Route
+    DependsOn: routeTable
+    Properties:
+      RouteTableId:
+        Ref: routeTable
+      GatewayId:
+        Ref: InternetGatewayId
+      DestinationCidrBlock:
+        Ref: DestinationCidrBlock

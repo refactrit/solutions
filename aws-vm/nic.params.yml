@@ -1,0 +1,7 @@
+---
+- ParameterKey: Name
+  ParameterValue: '{| vars.name |}'
+- ParameterKey: SubnetId
+  ParameterValue: '{| vars.subnetId |}'
+- ParameterKey: SecurityGroupId
+  ParameterValue: '{| vars.securityGroupId |}'

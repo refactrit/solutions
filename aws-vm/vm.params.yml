@@ -1,0 +1,13 @@
+---
+- ParameterKey: Name
+  ParameterValue: '{| vars.name |}'
+- ParameterKey: KeyPairName
+  ParameterValue: '{| vars.keyPairName |}'
+- ParameterKey: Image
+  ParameterValue: '{| vars.image |}'
+- ParameterKey: Size
+  ParameterValue: '{| vars.size |}'
+- ParameterKey: NetworkInterfaceId
+  ParameterValue: '{| vars.networkInterfaceId |}'
+- ParameterKey: IpAddressId
+  ParameterValue: '{| vars.elasticIpId |}'

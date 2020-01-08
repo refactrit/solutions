@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  "Creates an AWS EC2 instance"
+Parameters: 
+  Name: 
+    Type: String
+    Description: Name of the virtual machine
+  KeyPairName:
+    Type: String
+    Description: Name of the AWS Key Pair to use to connect to this VM
+  Image:
+    Type: String
+    Description: Image for the virtual machine
+  Size: 
+    Type: String
+    Description: Size of the virtual machine
+  NetworkInterfaceId:
+    Type: String
+    Description: ID of the network interface for the virtual machine
+  IpAddressId:
+    Type: String
+    Description: ID of the IP Address for the virtual machine
+Resources:
+  virtualMachine:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId:
+        Ref: Image
+      InstanceType:
+        Ref: Size
+      KeyName:
+        Ref: KeyPairName
+      NetworkInterfaces:
+        - NetworkInterfaceId:
+            Ref: NetworkInterfaceId
+          DeviceIndex: 0
+      Tags:
+        - Key: Name
+          Value:
+            Ref: Name
+  iPAssocation:
+    Type: AWS::EC2::EIPAssociation
+    DependsOn: virtualMachine
+    Properties:
+      AllocationId:
+        Ref: IpAddressId
+      InstanceId:
+        Ref: virtualMachine
