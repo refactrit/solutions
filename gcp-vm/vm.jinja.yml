@@ -1,0 +1,19 @@
+resources:
+  - name: {{ properties['name'] }}
+    type: compute.v1.instance
+    properties:
+      zone: {{ properties['zone'] }}
+      machineType: zones/{{ properties['zone'] }}/machineTypes/{{ properties['size'] }}
+      disks:
+        - deviceName: boot
+          type: PERSISTENT
+          boot: true
+          autoDelete: true
+          initializeParams:
+            sourceImage: {{ properties['image'] }}
+      networkInterfaces:
+          - subnetwork: regions/{{ properties['region'] }}/subnetworks/{{ properties['subnetName'] }}
+            accessConfigs:
+              - name: "static-ip"
+                type: ONE_TO_ONE_NAT
+                natIP: {{ properties['ipAddress'] }}

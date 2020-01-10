@@ -1,0 +1,12 @@
+---
+  imports:
+    - path: firewall.jinja
+  resources:
+    - name: "{| vars.name |}"
+      type: firewall.jinja
+      properties:
+        name: "{| vars.name |}"
+        externalRulesName: "{| vars.externalFirewallName |}"
+        internalRulesName: "{| vars.internalFirewallName |}"
+        virtualNetworkName: "{| vars.virtualNetworkName |}"
+        subnetAddressSpace: "{| vars.addressSpace |}"

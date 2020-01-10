@@ -1,0 +1,5 @@
+resources:
+  - name: {{ properties['name'] }}
+    type: compute.v1.network
+    properties:
+        autoCreateSubnetworks: false

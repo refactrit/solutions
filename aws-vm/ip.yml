@@ -1,11 +1,19 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description:
   "Creates an Elastic IP address which can then be attached to an EC2 instance"
+Parameters: 
+  Name: 
+    Type: String
+    Description: Name of the IP Address
 Resources:
   ipAddress:
     Type: AWS::EC2::EIP
     Properties: 
       Domain: vpc
+      Tags:
+        - Key: Name
+          Value:
+            Ref: Name
 Outputs:
   ipAddress:
     Description: IP Address (referenced via the id)

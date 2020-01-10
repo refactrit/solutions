@@ -1,0 +1,11 @@
+---
+imports:
+  - path: subnet.jinja
+resources:
+  - name: '{| vars.name |}'
+    type: subnet.jinja
+    properties:
+      name: '{| vars.name |}'
+      virtualNetworkName: '{| vars.virtualNetworkName |}'
+      addressSpace: '{| vars.addressSpace |}'
+      region: "{| vars.region |}"

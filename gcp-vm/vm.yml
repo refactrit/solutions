@@ -1,0 +1,13 @@
+imports:
+  - path: virtualMachine.jinja
+resources:
+  - name: "{| vars.name |}"
+    type: virtualMachine.jinja
+    properties:
+      name: "{| vars.name |}"
+      zone: "{| vars.zone |}"
+      region: "{| vars.region |}"
+      image: "{| vars.image |}"
+      size: "{| vars.size |}"
+      subnetName: "{| vars.subnetName |}"
+      ipAddress: "{| vars.address |}"

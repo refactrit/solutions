@@ -1,0 +1,23 @@
+resources:
+
+  - type: compute.v1.firewall
+    name: {{ properties['externalRulesName'] }}
+    properties:
+       name: {{ properties['externalRulesName'] }}
+       network: projects/{{ env['project'] }}/global/networks/{{ properties['virtualNetworkName'] }}
+       allowed:
+        - IPProtocol: tcp
+          ports: ["22", "3389", "5986"]
+  
+  - type: compute.v1.firewall
+    name: {{ properties['internalRulesName'] }}
+    properties:
+       name: {{ properties['internalRulesName'] }}
+       network: projects/{{ env['project'] }}/global/networks/{{ properties['virtualNetworkName'] }}
+       sourceRanges:
+        - {{ properties['subnetAddressSpace'] }}
+       allowed:
+        - IPProtocol: tcp
+          ports: ["0-65535"]
+        - IPProtocol: udp
+          ports: ["0-65535"]

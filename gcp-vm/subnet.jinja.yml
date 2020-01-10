@@ -1,0 +1,7 @@
+resources:
+  - name: {{ properties['name'] }}
+    type: compute.v1.subnetwork
+    properties:
+      network: projects/{{ env['project'] }}/global/networks/{{ properties['virtualNetworkName'] }}
+      ipCidrRange: {{ properties['addressSpace'] }}
+      region: {{ properties['region'] }}

@@ -1,0 +1,12 @@
+---
+imports:
+  - path: ipAddress.jinja
+resources:
+  - name: '{| vars.name |}'
+    type: ipAddress.jinja
+    properties:
+      name: '{| vars.name |}'
+      region: '{| vars.region |}'
+outputs:
+  - name: ipAddress
+    value: '{| ''$(ref.'' + vars.name + ''.address)'' |}'
