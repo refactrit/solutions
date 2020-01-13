@@ -8,13 +8,7 @@ all:
       ansible_password: "{| vars.dmzAdminPassword |}"
       ansible_connection: winrm
       ansible_winrm_server_cert_validation: ignore
-    dmzdc_domainuser:
-      ansible_host: "{| findStepById('ip1').result.outputs.ipAddress |}"
-      ansible_port: 5986
-      ansible_user: "{| vars.dmzDomainName + '\\\\' + vars.dmzAdminUser |}"
-      ansible_password: "{| vars.dmzAdminPassword |}"
-      ansible_connection: winrm
-      ansible_winrm_server_cert_validation: ignore
+      ansible_winrm_transport: credssp
     landc:
       ansible_host: "{| findStepById('ip2').result.outputs.ipAddress |}"
       ansible_port: 5986
@@ -22,6 +16,7 @@ all:
       ansible_password: "{| vars.lanAdminPassword |}"
       ansible_connection: winrm
       ansible_winrm_server_cert_validation: ignore
+      ansible_winrm_transport: credssp
     rdsh1:
       ansible_host: "{| findStepById('ip3').result.outputs.ipAddress |}"
       ansible_port: 5986
@@ -29,6 +24,7 @@ all:
       ansible_password: "{| vars.rdshAdminPassword |}"
       ansible_connection: winrm
       ansible_winrm_server_cert_validation: ignore
+      ansible_winrm_transport: credssp
   children:
     dc:
       hosts:
