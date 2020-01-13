@@ -1,0 +1,284 @@
+---
+  - name: Install RAS Components
+    hosts: dmzdc
+    gather_facts: no
+    vars:
+      winFeatures:
+        - Web-Static-Content
+        - Web-Net-Ext
+        - Web-Asp-Net
+        - Web-Mgmt-Console
+        - Web-Scripting-Tools
+        - NET-Framework-Core
+        - NET-HTTP-Activation
+        - NET-Non-HTTP-Activ
+      rasComponents:
+        - F_Console
+        - F_PowerShell
+        - F_Controller
+    tasks:
+      - name: Install Windows Features
+        win_feature:
+          name: "{{ winFeatures | join(',') }}"
+          include_sub_features: yes
+          include_management_tools: yes
+          state: present
+      - name: Download RAS Installer
+        win_get_url: 
+          url: "{{ rasInstallerURL }}"
+          dest: "C:\\Windows\\Temp\\RASInstaller.msi"
+          force: false
+      - name: Install RAS MSI Package
+        win_package:
+          path: "C:\\Windows\\Temp\\RASInstaller.msi"
+          arguments: "ADDLOCAL=\"{{ rasComponents | join(',') }}\""
+          state: present
+      - name: Registry ConsentPromptBehaviorAdmin
+        win_regedit: 
+          path: "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System"
+          name: ConsentPromptBehaviorAdmin
+          data: 0
+          type: dword
+          state: present
+      - name: Registry EnableLUA
+        win_regedit: 
+          path: "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System"
+          name: EnableLUA
+          data: 0
+          type: dword
+          state: present
+      - name: Registry SharingWizardOn
+        win_regedit: 
+          path: "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\Folder\\SharingWizardOn"
+          name: CheckedValue
+          data: 0
+          type: dword
+          state: present
+      - name: Set IIS serverAutoStart
+        win_shell: |-
+          Import-Module WebAdministration
+          Set-ItemProperty "IIS:\Sites\Default Web Site" serverAutoStart False
+      - name: Registry Parallels ProductDir
+        win_regedit: 
+          path: HKLM:\SOFTWARE\WOW6432Node\Parallels\Setup\ApplicationServer
+          name: ProductDir
+          data: C:\Program Files (x86)\Parallels\ApplicationServer\
+          type: string
+          state: present
+  
+  - name: Configure RDSH
+    hosts: rdsh
+    gather_facts: no
+    vars:
+      rdshPorts:
+        - port: 30004
+          protocol: tcp
+        - port: 20003
+          protocol: tcp
+        - port: 30004
+          protocol: udp
+        - port: 135
+          protocol: tcp
+        - port: 445
+          protocol: tcp
+    tasks:
+      - name: Install Windows Features
+        win_feature:
+          name: RDS-RD-Server
+          include_sub_features: yes
+          include_management_tools: yes
+          state: present
+      - name: Registry ConsentPromptBehaviorAdmin
+        win_regedit: 
+          path: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
+          name: ConsentPromptBehaviorAdmin
+          data: 0
+          type: dword
+          state: present
+      - name: Registry EnableLUA
+        win_regedit: 
+          path: "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System"
+          name: EnableLUA
+          data: 0
+          type: dword
+          state: present
+      - name: Registry SharingWizardOn
+        win_regedit: 
+          path: "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\Folder\\SharingWizardOn"
+          name: CheckedValue
+          data: 0
+          type: dword
+          state: present
+      - name: RDSH Windows Firewall Rules
+        with_items: "{{ rdshPorts }}"
+        win_firewall_rule:
+          name: "Parallels RAS RDSH {{ item.protocol }} {{ item.port }}"
+          localport: "{{ item.port }}"
+          protocol: "{{ item.protocol }}"
+          enabled: yes
+          state: present
+          action: allow
+          direction: in
+  
+  - name: Write RAS Configuration Script
+    hosts: localhost
+    gather_facts: no
+    tasks:
+      - name: Write RAS Configuration Script
+        copy:
+          dest: ./ConfigureRAS.ps1
+          content: |-
+            param(
+              [string]$LANDomainName,
+              [string]$DMZDomainName,
+              [string]$AdminServer,
+              [string]$LANAdminUser,
+              [string]$LANAdminPassword,
+              [string]$DMZAdminUser,
+              [string]$DMZAdminPassword,
+              [string]$LicenseEmail,
+              [string]$LicensePassword,
+              [string]$LicenseKey,
+              [string[]]$SessionHosts,
+              [string[]]$SecureClientGateways,
+              [string]$RASGroupName,
+              [string[]]$PublishingAgents=@(),
+              [string]$SMTPServer,
+              [string]$SMTPUsername,
+              [string]$SMTPPassword,
+              [string]$SMTPSenderAddress,
+              [string]$SMTPUseTLS,    # No | Yes | YesIfAvailable
+              [bool]$SMTPRequireAuth
+            )
+            
+            $ErrorActionPreference = "Stop"
+            
+            Import-Module "C:\Program Files (x86)\Parallels\ApplicationServer\Modules\PSAdmin\PSAdmin.psd1"
+            
+            $SecureLANAdminPassword = ConvertTo-SecureString $LANAdminPassword -AsPlainText -Force
+            $SecureDMZAdminPassword = ConvertTo-SecureString $DMZAdminPassword -AsPlainText -Force
+            
+            New-RASSession -Username $DMZAdminUser -Password $SecureDMZAdminPassword -Server "$AdminServer.$DMZDomainName"
+            
+            # Configure SMTP Settings
+            $SecureSMTPPassword = ConvertTo-SecureString $SMTPPassword -AsPlainText -Force
+            Set-RASMailboxSettings -SMTPServer $SMTPServer -SenderAddress $SMTPSenderAddress -Username $SMTPUsername -Password $SecureSMTPPassword -RequireAuth $SMTPRequireAuth -UseTLS $SMTPUseTLS
+            
+            # Activate License
+            $SecureLicensePassword = ConvertTo-SecureString $LicensePassword -AsPlainText -Force
+            Try {
+              If ($LicenseKey) {
+                Invoke-LicenseActivate -Email $LicenseEmail -Password $SecureLicensePassword -Key $LicenseKey
+              } Else {
+                Invoke-LicenseActivate -Email $LicenseEmail -Password $SecureLicensePassword
+              }
+              Invoke-Apply
+            } Catch {
+              If ($_ -match "already activated") {
+                Write-Host $_
+              } Else {
+                throw $_.Exception
+              }
+            }
+            
+            Remove-RASSession
+            
+            # Add the LAN user to local Administrators to have permissions to add the RDS
+            $TmpUsername = If ($LANAdminUser -match '@') { ($LANAdminUser -split '@')[0] } Else { $LANAdminUser }
+            $TmpSecurePassword = ConvertTo-SecureString $LANAdminPassword -AsPlainText -Force
+            $TmpCredential = New-Object System.Management.Automation.PSCredential($TmpUsername, $TmpSecurePassword)
+            
+            $TmpUser = Get-ADUser -Identity $TmpUsername -Server $LANDomainName -Credential $TmpCredential
+            $TmpGroup = Get-ADGroup -Identity "Administrators"
+            Add-ADGroupMember -Identity $TmpGroup -Members $TmpUser
+            
+            New-RASSession -Username $LANAdminUser -Password $SecureLANAdminPassword -Server "$AdminServer.$DMZDomainName"
+            
+            # Add RD Session Host Servers
+            ForEach ($RDSH in $SessionHosts) {
+              Try { $ExistingRDSH = Get-RDS "$RDSH.$LANDomainName" } Catch {}
+              if (-not $ExistingRDSH) {
+                "Adding RDSH $RDSH.$LANDomainName"
+                New-RDS "$RDSH.$LANDomainName"
+              }
+            }
+            Invoke-Apply
+            
+            Remove-RASSession
+            
+            # Remove the LAN user from local Administrators
+            Remove-ADGroupMember -Identity $TmpGroup -Members $TmpUser -Confirm:$False
+            
+            New-RASSession -Username $DMZAdminUser -Password $SecureDMZAdminPassword -Server "$AdminServer.$DMZDomainName"
+            
+            # Add Secure Client Gateway Servers
+            ForEach ($SCG in $SecureClientGateways) {
+              Try { $ExistingSCG = Get-GW "$SCG.$DMZDomainName" } Catch {}
+              if (-not $ExistingSCG) {
+                "Adding SCG $SCG.$DMZDomainName"
+                New-GW "$SCG.$DMZDomainName"
+              }
+            }
+            Invoke-Apply
+            
+            # Create an RD Session Host Group and add both RD Session Host objects to it.
+            Try { $RASGroup = Get-RDSGroup -Name $RASGroupName } Catch {}
+            if (-not $RASGroup) {
+              "Adding group $RASGroupName"
+              $RDSList = Get-RDS
+              $RASGroup = New-RDSGroup -Name $RASGroupName -RDSObject $RDSList
+              Invoke-Apply
+            }
+            
+            # Publish the RDS group
+            Try { $PubDesktop = Get-PubRDSDesktop -Name $RASGroupName } Catch {}
+            if (-not $PubDesktop) {
+              "Adding published desktop group $RASGroupName"
+              New-PubRDSDesktop -Name $RASGroupName -PublishFromGroup $RASGroup
+            }
+            
+            # Add Publishing Agents
+            ForEach ($PA in $PublishingAgents) {
+              if ($PA -ne "") {
+                Try { $ExistingPA = Get-PA "$PA.$DMZDomainName" } Catch {}
+                if (-not $ExistingPA) {
+                  "Adding PA $PA.$DMZDomainName"
+                  New-PA "$PA.$DMZDomainName"
+                }
+              }
+            }
+            Invoke-Apply
+            
+            Remove-RASSession
+  
+  
+  - name: Configure RAS Deployment
+    hosts: dmzdc
+    gather_facts: no
+    vars:
+      rasConfigureArgs:
+        - "-AdminServer {{ adminServer | quote }}"
+        - "-LANDomainName {{ lanDomainName | quote }}"
+        - "-LANAdminUser {{ lanAdminUser | quote }}"
+        - "-LANAdminPassword {{ lanAdminPassword | quote }}"
+        - "-DMZDomainName {{ dmzDomainName | quote }}"
+        - "-DMZAdminUser {{ dmzAdminUser | quote }}"
+        - "-DMZAdminPassword {{ dmzAdminPassword | quote }}"
+        - "-LicenseEmail {{ licenseEmail | quote }}"
+        - "-LicensePassword {{ licensePassword | quote }}"
+        - "-LicenseKey {{ licenseKey | quote }}"
+        - "-SessionHosts {{ sessionHosts | join(',') | quote }}"
+        - "-SecureClientGateways {{ secureClientGateways | join(',') | quote }}"
+        - "-RASGroupName {{ rasGroupName | quote }}"
+        - "-PublishingAgents {{ publishingAgents | join(',') | quote }}"
+        - "-SMTPServer {{ smtpServer | quote }}"
+        - "-SMTPUsername {{ smtpUsername | quote }}"
+        - "-SMTPPassword {{ smtpPassword | quote }}"
+        - "-SMTPSenderAddress {{ smtpSenderAddress | quote }}"
+        - "-SMTPUseTLS {{ 'YesIfAvailable' if smtpUseTLS else 'No' }}"    # No | Yes | YesIfAvailable
+        - "-SMTPRequireAuth {{ 1 if smtpRequireAuth else 0 }}"
+    tasks:
+      - debug:
+          var: rasConfigureArgs
+      - name: Execute RAS Configuration Script
+        script: "./ConfigureRAS.ps1 {{ rasConfigureArgs | join(' ') }}"

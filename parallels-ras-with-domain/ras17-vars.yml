@@ -1,0 +1,25 @@
+---
+rasInstallerURL: "{| vars.rasInstallerURL |}" 
+adminServer: "{| vars.adminServer |}"
+dmzDomainName: "{| vars.dmzDomainName |}"
+dmzAdminUser: "{| vars.dmzAdminUser |}"
+dmzAdminPassword: "{| vars.dmzAdminPassword |}"
+lanDomainName: "{| vars.lanDomainName |}"
+lanAdminUser: "{| vars.lanAdminUser |}"
+lanAdminPassword: "{| vars.lanAdminPassword |}"
+
+rasGroupName: "{| vars.rasGroupName |}"
+secureClientGateways: "{| vars.secureClientGateways |}"
+publishingAgents: "{| vars.publishingAgents |}"
+sessionHosts: "{| vars.sessionHosts |}"
+
+licenseEmail: "{| vars.licenseEmail |}"
+licensePassword: "{| vars.licensePassword |}"
+licenseKey: "{| vars.licenseKey |}"
+
+smtpServer: "{| vars.smtpServer |}"
+smtpUsername: "{| vars.smtpUsername |}"
+smtpPassword: "{| vars.smtpPassword |}"
+smtpRequireAuth: "{| vars.smtpRequireAuth |}"
+smtpSenderAddress: "{| vars.smtpSenderAddress |}"
+smtpUseTLS: "{| vars.smtpUseTLS |}"
