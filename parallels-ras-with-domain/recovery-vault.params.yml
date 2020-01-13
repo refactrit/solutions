@@ -1,0 +1,41 @@
+---
+$schema: >-
+  https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#
+contentVersion: 1.0.0.0
+parameters:
+  location:
+    value: "{| vars.location |}"
+
+  # Recovery Vault
+  recoveryVaultName:
+    value: "{| vars.recoveryVaultName |}"
+  skuTier: 
+    value: "{| vars.skuTier |}"
+
+  # Backup Policy
+  backupPolicyName:
+    value: '{| vars.backupPolicyName|}'
+  scheduleRunTimes:
+    value: '{| vars.scheduleRunTimes |}'
+  timeZone:
+    value: '{| vars.timeZone |}'
+  dailyRetentionDurationCount:
+    value: '{| vars.days |}'
+  daysOfTheWeek:
+    value: '{| vars.daysOfWeek |}'
+  weeklyRetentionDurationCount:
+    value: '{| vars.weeks |}'
+  weeksOfTheMonth:
+    value: '{| vars.weeksOfMonth |}'
+  monthlyRetentionDurationCount:
+    value: '{| vars.months |}'
+  monthsOfTheYear:
+    value: '{| vars.monthsOfYear |}'
+  yearlyRetentionDurationCount:
+    value: '{| vars.years |}'
+
+  # Protected Items
+  resourceGroupName:
+    value: '{| vars.resourceGroupName |}'
+  virtualMachineNames:
+    value: '{| vars.virtualMachineNames |}'

@@ -1,0 +1,161 @@
+---
+$schema: >-
+  https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#
+contentVersion: 1.0.0.0
+parameters:
+  location:
+    type: string
+    metadata:
+      description: Location of the deployment of the recovery vault
+
+  # Recovery Vault
+  recoveryVaultName:
+    type: string
+    metadata:
+      description: Name of the recovery vault
+  skuTier:
+    type: string
+    metadata:
+      description: SKU tier for the vault, either Standard or Premium
+
+  # Backup Policy
+  backupPolicyName:
+    type: string
+    metadata:
+      description: Name of the Backup Policy
+  scheduleRunTimes:
+    type: array
+    metadata:
+      description: >-
+        Time to run the backup; must be an array in the format
+        2018-11-18T05:00:00.000Z
+  daysOfTheWeek:
+    type: array
+    metadata:
+      description: Days of the week which the backup will run (e.g. Monday)
+  weeksOfTheMonth:
+    type: array
+    metadata:
+      description: Weeks of the month for weekly backup (e.g. First)
+  monthsOfTheYear:
+    type: array
+    metadata:
+      description: Array of months for yearly retention (e.g. January)
+  timeZone:
+    type: string
+    metadata:
+      description: Time zone to use for the backup e.g. Pacific Standard Time
+  dailyRetentionDurationCount:
+    type: int
+    metadata:
+      description: Number of days you want to retain the backup
+  weeklyRetentionDurationCount:
+    type: int
+    metadata:
+      description: Number of weeks you want to retain the backup
+  monthlyRetentionDurationCount:
+    type: int
+    metadata:
+      description: Number of months you want to retain the backup
+  yearlyRetentionDurationCount:
+    type: int
+    metadata:
+      description: Number of years you want to retain the backup
+
+  # Protected Items
+  resourceGroupName:
+    type: string
+    metadata:
+      description: >-
+        Resource group where the virtual machines are located. This can be
+        different than resource group of the vault
+  virtualMachineNames:
+    type: array
+    metadata:
+      description: 'Array of Azure virtual machines (e.g. ["vm1","vm2","vm3"])'
+
+resources:
+
+  # Recovery Vault
+  - apiVersion: "2018-01-10"
+    name: "[ parameters('name') ]"
+    type: "Microsoft.RecoveryServices/vaults"
+    location: "[ parameters('location') ]"
+    tags: {}
+    properties: {}
+    sku:
+      name: "RS0"
+      tier: "[ parameters('skuTier') ]"
+
+  # Backup Policy
+  - name: '[ concat(parameters(''recoveryVaultName''), ''/'', parameters(''backupPolicyName'')) ]'
+    apiVersion: '2016-06-01'
+    type: Microsoft.RecoveryServices/vaults/backupPolicies
+    location: '[ parameters(''location'') ]'
+    dependsOn:
+      - '[ concat(''Microsoft.RecoveryServices/vaults/'', parameters(''recoveryVaultName'')) ]'
+    properties:
+      backupManagementType: AzureIaasVM
+      schedulePolicy:
+        scheduleRunFrequency: Daily
+        scheduleRunDays: null
+        scheduleRunTimes: '[ parameters(''scheduleRunTimes'') ]'
+        schedulePolicyType: SimpleSchedulePolicy
+      retentionPolicy:
+        dailySchedule:
+          retentionTimes: '[ parameters(''scheduleRunTimes'') ]'
+          retentionDuration:
+            count: '[ parameters(''dailyRetentionDurationCount'') ]'
+            durationType: Days
+        weeklySchedule:
+          daysOfTheWeek: '[ parameters(''daysOfTheWeek'') ]'
+          retentionTimes: '[ parameters(''scheduleRunTimes'') ]'
+          retentionDuration:
+            count: '[ parameters(''weeklyRetentionDurationCount'') ]'
+            durationType: Weeks
+        monthlySchedule:
+          retentionScheduleFormatType: Weekly
+          retentionScheduleDaily: null
+          retentionScheduleWeekly:
+            daysOfTheWeek: '[ parameters(''daysOfTheWeek'') ]'
+            weeksOfTheMonth: '[ parameters(''weeksOfTheMonth'') ]'
+          retentionTimes: '[ parameters(''scheduleRunTimes'') ]'
+          retentionDuration:
+            count: '[ parameters(''monthlyRetentionDurationCount'') ]'
+            durationType: Months
+        yearlySchedule:
+          retentionScheduleFormatType: Weekly
+          monthsOfYear: '[ parameters(''monthsOfTheYear'') ]'
+          retentionScheduleDaily: null
+          retentionScheduleWeekly:
+            daysOfTheWeek: '[ parameters(''daysOfTheWeek'') ]'
+            weeksOfTheMonth: '[ parameters(''weeksOfTheMonth'') ]'
+          retentionTimes: '[ parameters(''scheduleRunTimes'') ]'
+          retentionDuration:
+            count: '[ parameters(''yearlyRetentionDurationCount'') ]'
+            durationType: Years
+        retentionPolicyType: LongTermRetentionPolicy
+      timeZone: '[ parameters(''timeZone'') ]'
+
+  # Protected Items
+  - name: >-
+      [ concat(parameters('recoveryVaultName'), '/',
+      variables('backupFabric'), '/', variables('v2VmContainer'),
+      concat(parameters('resourceGroupName'),';',parameters('virtualMachineNames')[copyIndex()]),
+      '/', variables('v2Vm'),
+      concat(parameters('resourceGroupName'),';',parameters('virtualMachineNames')[copyIndex()]))
+      ]
+    apiVersion: '2016-06-01'
+    location: '[ parameters(''location'') ]'
+    type: >-
+      Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems
+    copy:
+      name: v2VmsCopy
+      count: '[ length(parameters(''virtualMachineNames'')) ]'
+    dependsOn:
+      - '[ concat(''Microsoft.RecoveryServices/vaults/backupPolicies/'', parameters(''backupPolicyName'')) ]'
+    properties:
+      protectedItemType: '[ variables(''v2VmType'') ]'
+      policyId: "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies',parameters('recoveryVaultName'),parameters('backupPolicyName'))]"
+      sourceResourceId: "[resourceId(subscription().subscriptionId,parameters('resourceGroupName'),'Microsoft.Compute/virtualMachines',parameters('virtualMachineNames')[copyIndex()])]"
+  

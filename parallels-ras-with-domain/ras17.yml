@@ -253,7 +253,7 @@
   
   
   - name: Configure RAS Deployment
-    hosts: dmzdc
+    hosts: dmzdc_domainuser
     gather_facts: no
     vars:
       rasConfigureArgs:
