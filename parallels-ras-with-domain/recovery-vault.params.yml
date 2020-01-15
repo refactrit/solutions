@@ -19,20 +19,20 @@ parameters:
     value: '{| vars.scheduleRunTimes |}'
   timeZone:
     value: '{| vars.timeZone |}'
-  dailyRetentionDurationCount:
-    value: '{| vars.days |}'
   daysOfTheWeek:
-    value: '{| vars.daysOfWeek |}'
-  weeklyRetentionDurationCount:
-    value: '{| vars.weeks |}'
+    value: '{| vars.daysOfTheWeek |}'
+  dailyRetentionDurationCount:
+    value: '{| vars.dailyRetentionDurationCount |}'
   weeksOfTheMonth:
-    value: '{| vars.weeksOfMonth |}'
-  monthlyRetentionDurationCount:
-    value: '{| vars.months |}'
+    value: '{| vars.weeksOfTheMonth |}'
+  weeklyRetentionDurationCount:
+    value: '{| vars.weeklyRetentionDurationCount |}'
   monthsOfTheYear:
-    value: '{| vars.monthsOfYear |}'
+    value: '{| vars.monthsOfTheYear |}'
+  monthlyRetentionDurationCount:
+    value: '{| vars.monthlyRetentionDurationCount |}'
   yearlyRetentionDurationCount:
-    value: '{| vars.years |}'
+    value: '{| vars.yearlyRetentionDurationCount |}'
 
   # Protected Items
   resourceGroupName:

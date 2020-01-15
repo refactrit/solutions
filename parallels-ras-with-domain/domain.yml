@@ -40,6 +40,9 @@
 - name: RDSH LAN Domain Member
   hosts: rdsh
   tasks:
+    - name: Pause to give domains time to start up
+      pause:
+        seconds: 60
     - name: Set DNS Servers
       win_dns_client:
         adapter_names: "*"
