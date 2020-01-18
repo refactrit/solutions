@@ -1,0 +1,40 @@
+---
+$schema: >-
+  https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#
+contentVersion: 1.0.0.0
+parameters:
+  vpnType:
+    value: '{| vars.vpnType |}'
+  localGatewayName:
+    value: '{| vars.localGatewayName |}'
+  localGatewayIpAddress:
+    value: '{| vars.localGatewayIpAddress |}'
+  localAddressPrefix:
+    value:
+      - '{| vars.localAddressPrefix |}'
+  virtualNetworkName:
+    value: '{| vars.virtualNetworkName |}'
+  gatewayPublicIPName:
+    value: '{| vars.gatewayPublicIPName |}'
+  gatewayName:
+    value: '{| vars.gatewayName |}'
+  connectionName:
+    value: '{| vars.connectionName |}'
+  sharedKey:
+    value: '{| vars.sharedKey |}'
+  saLifeTimeSeconds:
+    value: '{| vars.saLifeTimeSeconds |}'
+  saDataSizeKilobytes:
+    value: '{| vars.saDataSizeKilobytes |}'
+  ipsecEncryption:
+    value: '{| vars.ipsecEncryption |}'
+  ipsecIntegrity:
+    value: '{| vars.ipsecIntegrity |}'
+  ikeEncryption:
+    value: '{| vars.ikeEncryption |}'
+  ikeIntegrity:
+    value: '{| vars.ikeIntegrity |}'
+  dhGroup:
+    value: '{| vars.dhGroup |}'
+  pfsGroup:
+    value: '{| vars.pfsGroup |}'

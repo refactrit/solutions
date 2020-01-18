@@ -1,0 +1,107 @@
+---
+"$schema": https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#
+contentVersion: 1.0.0.0
+parameters:
+  namePrefix:
+    type: string
+  adminUsername:
+    type: string
+  adminPassword:
+    type: securestring
+  windowsOSVersion:
+    type: string
+  vmSize:
+    type: string
+  location:
+    type: string
+variables:
+  virtualNetworkName: "[concat(parameters('namePrefix'), '-net')]"
+  subnetName: "[concat(parameters('namePrefix'), '-sub')]"
+  addressPrefix: 172.16.0.0/16
+  subnetPrefix: 172.16.0.0/24
+  networkSecurityGroupName: "[concat(parameters('namePrefix'), '-nsg')]"
+  nicName: "[concat(parameters('namePrefix'), '-nic')]"
+  publicIPAddressName: "[concat(parameters('namePrefix'), '-ip')]"
+  vmName: "[concat(parameters('namePrefix'), '-vm')]"
+  subnetRef: "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+resources:
+  - type: Microsoft.Network/publicIPAddresses
+    apiVersion: '2018-11-01'
+    name: "[variables('publicIPAddressName')]"
+    location: "[parameters('location')]"
+    properties:
+      publicIPAllocationMethod: Dynamic
+  - type: Microsoft.Network/networkSecurityGroups
+    apiVersion: '2019-08-01'
+    name: "[variables('networkSecurityGroupName')]"
+    location: "[parameters('location')]"
+    properties:
+      securityRules:
+        - name: default-allow-3389
+          properties:
+            priority: 1000
+            access: Allow
+            direction: Inbound
+            destinationPortRange: '3389'
+            protocol: Tcp
+            sourcePortRange: "*"
+            sourceAddressPrefix: "*"
+            destinationAddressPrefix: "*"
+  - type: Microsoft.Network/virtualNetworks
+    apiVersion: '2018-11-01'
+    name: "[variables('virtualNetworkName')]"
+    location: "[parameters('location')]"
+    dependsOn:
+      - "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+    properties:
+      addressSpace:
+        addressPrefixes:
+          - "[variables('addressPrefix')]"
+      subnets:
+        - name: "[variables('subnetName')]"
+          properties:
+            addressPrefix: "[variables('subnetPrefix')]"
+            networkSecurityGroup:
+              id: "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+  - type: Microsoft.Network/networkInterfaces
+    apiVersion: '2018-11-01'
+    name: "[variables('nicName')]"
+    location: "[parameters('location')]"
+    dependsOn:
+      - "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+      - "[resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+    properties:
+      ipConfigurations:
+        - name: ipconfig1
+          properties:
+            privateIPAllocationMethod: Dynamic
+            publicIPAddress:
+              id: "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+            subnet:
+              id: "[variables('subnetRef')]"
+  - type: Microsoft.Compute/virtualMachines
+    apiVersion: '2018-10-01'
+    name: "[variables('vmName')]"
+    location: "[parameters('location')]"
+    condition: "[bool('false')]"
+    dependsOn:
+      - "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+    properties:
+      hardwareProfile:
+        vmSize: "[parameters('vmSize')]"
+      osProfile:
+        computerName: "[variables('vmName')]"
+        adminUsername: "[parameters('adminUsername')]"
+        adminPassword: "[parameters('adminPassword')]"
+      storageProfile:
+        imageReference:
+          publisher: MicrosoftWindowsServer
+          offer: WindowsServer
+          sku: "[parameters('windowsOSVersion')]"
+          version: latest
+        osDisk:
+          createOption: FromImage
+      networkProfile:
+        networkInterfaces:
+          - id: "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+  
