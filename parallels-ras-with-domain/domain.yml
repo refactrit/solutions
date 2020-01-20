@@ -105,7 +105,7 @@
       script: "./DomainForwarder.ps1 {{ dmzInternalIP }} {{ dmzDomainName }}"
     
 - name: Domain Trust
-  hosts: landc
+  hosts: dmzdc
   tasks:
     - name: Download ADTrust.ps1
       win_get_url: 
@@ -113,5 +113,5 @@
         dest: "C:\\Windows\\Temp\\ADTrust.ps1"
         force: false
     - name: Execute DomainTrust.ps1
-      script: "./DomainTrust.ps1 {{ dmzDomainName }} {{ dmzDomainUser }} {{ dmzDomainPassword }} Outbound"
+      script: "./DomainTrust.ps1 {{ lanDomainName }} {{ lanDomainUser }} {{ lanDomainPassword }} Outbound"
   

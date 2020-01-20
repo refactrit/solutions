@@ -259,7 +259,7 @@
       rasConfigureArgs:
         - "-AdminServer {{ adminServer | quote }}"
         - "-LANDomainName {{ lanDomainName | quote }}"
-        - "-LANAdminUser {{ lanAdminUser | quote }}"
+        - "-LANAdminUser {{ (lanAdminUser + '@' + lanDomainName) | quote }}"
         - "-LANAdminPassword {{ lanAdminPassword | quote }}"
         - "-DMZDomainName {{ dmzDomainName | quote }}"
         - "-DMZAdminUser {{ dmzAdminUser | quote }}"
