@@ -46,7 +46,7 @@ parameters:
       description: Arbitrary name for the new gateway
   gatewaySku:
     type: string
-    defaultValue: Basic
+    defaultValue: Standard
     allowedValues:
       - Basic
       - Standard
@@ -67,9 +67,9 @@ parameters:
     metadata:
       description: Shared key (PSK) for IPSec tunnel
   saLifeTimeSeconds:
-    type: integer
+    type: int
   saDataSizeKilobytes:
-    type: integer
+    type: int
   ipsecEncryption:
     type: string
   ipsecIntegrity:
@@ -86,6 +86,12 @@ variables:
   gatewaySubnetRef: "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'),'GatewaySubnet')]"
 resources:
   - apiVersion: '2015-06-15'
+    type: Microsoft.Network/publicIPAddresses
+    name: '[parameters(''gatewayPublicIPName'')]'
+    location: '[resourceGroup().location]'
+    properties:
+      publicIPAllocationMethod: Dynamic
+  - apiVersion: '2015-06-15'
     type: Microsoft.Network/localNetworkGateways
     name: '[parameters(''localGatewayName'')]'
     location: '[resourceGroup().location]'
@@ -93,45 +99,6 @@ resources:
       localNetworkAddressSpace:
         addressPrefixes: '[parameters(''localAddressPrefix'')]'
       gatewayIpAddress: '[parameters(''localGatewayIpAddress'')]'
-  - apiVersion: '2015-06-15'
-    name: '[parameters(''connectionName'')]'
-    type: Microsoft.Network/connections
-    location: '[resourceGroup().location]'
-    dependsOn:
-      - "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('gatewayName'))]"
-      - "[concat('Microsoft.Network/localNetworkGateways/', parameters('localGatewayName'))]"
-    properties:
-      virtualNetworkGateway1:
-        id: "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('gatewayName'))]"
-        vpnClientIpsecPolicies:
-          - saLifeTimeSeconds: "[parameters('saLifeTimeSeconds')]"
-            saDataSizeKilobytes: "[parameters('saDataSizeKilobytes')]"
-            ipsecEncryption: "[parameters('ipsecEncryption')]"
-            ipsecIntegrity: "[parameters('ipsecIntegrity')]"
-            ikeEncryption: "[parameters('ikeEncryption')]"
-            ikeIntegrity: "[parameters('ikeIntegrity')]"
-            dhGroup: "[parameters('dhGroup')]"
-            pfsGroup: "[parameters('pfsGroup')]"
-      localNetworkGateway2:
-        id: "[resourceId('Microsoft.Network/localNetworkGateways', parameters('localGatewayName'))]"
-        vpnClientIpsecPolicies:
-          - saLifeTimeSeconds: "[parameters('saLifeTimeSeconds')]"
-            saDataSizeKilobytes: "[parameters('saDataSizeKilobytes')]"
-            ipsecEncryption: "[parameters('ipsecEncryption')]"
-            ipsecIntegrity: "[parameters('ipsecIntegrity')]"
-            ikeEncryption: "[parameters('ikeEncryption')]"
-            ikeIntegrity: "[parameters('ikeIntegrity')]"
-            dhGroup: "[parameters('dhGroup')]"
-            pfsGroup: "[parameters('pfsGroup')]"
-      connectionType: IPsec
-      routingWeight: 10
-      sharedKey: '[parameters(''sharedKey'')]'
-  - apiVersion: '2015-06-15'
-    type: Microsoft.Network/publicIPAddresses
-    name: '[parameters(''gatewayPublicIPName'')]'
-    location: '[resourceGroup().location]'
-    properties:
-      publicIPAllocationMethod: Dynamic
   - apiVersion: '2015-06-15'
     type: Microsoft.Network/virtualNetworkGateways
     name: '[parameters(''gatewayName'')]'
@@ -153,3 +120,38 @@ resources:
       gatewayType: Vpn
       vpnType: '[parameters(''vpnType'')]'
       enableBgp: 'false'
+      vpnClientConfiguration:
+        vpnClientIpsecPolicies:
+          - saLifeTimeSeconds: "[parameters('saLifeTimeSeconds')]"
+            saDataSizeKilobytes: "[parameters('saDataSizeKilobytes')]"
+            ipsecEncryption: "[parameters('ipsecEncryption')]"
+            ipsecIntegrity: "[parameters('ipsecIntegrity')]"
+            ikeEncryption: "[parameters('ikeEncryption')]"
+            ikeIntegrity: "[parameters('ikeIntegrity')]"
+            dhGroup: "[parameters('dhGroup')]"
+            pfsGroup: "[parameters('pfsGroup')]"
+  - apiVersion: '2015-06-15'
+    name: '[parameters(''connectionName'')]'
+    type: Microsoft.Network/connections
+    location: '[resourceGroup().location]'
+    dependsOn:
+      - "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('gatewayName'))]"
+      - "[concat('Microsoft.Network/localNetworkGateways/', parameters('localGatewayName'))]"
+    properties:
+      virtualNetworkGateway1:
+        id: "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('gatewayName'))]"
+      localNetworkGateway2:
+        id: "[resourceId('Microsoft.Network/localNetworkGateways', parameters('localGatewayName'))]"
+      vpnClientConfiguration:
+        vpnClientIpsecPolicies:
+          - saLifeTimeSeconds: "[parameters('saLifeTimeSeconds')]"
+            saDataSizeKilobytes: "[parameters('saDataSizeKilobytes')]"
+            ipsecEncryption: "[parameters('ipsecEncryption')]"
+            ipsecIntegrity: "[parameters('ipsecIntegrity')]"
+            ikeEncryption: "[parameters('ikeEncryption')]"
+            ikeIntegrity: "[parameters('ikeIntegrity')]"
+            dhGroup: "[parameters('dhGroup')]"
+            pfsGroup: "[parameters('pfsGroup')]"
+      connectionType: IPsec
+      routingWeight: 10
+      sharedKey: '[parameters(''sharedKey'')]'

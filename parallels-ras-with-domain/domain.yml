@@ -42,7 +42,7 @@
   tasks:
     - name: Pause to give domains time to start up
       pause:
-        seconds: 60
+        seconds: 180
     - name: Set DNS Servers
       win_dns_client:
         adapter_names: "*"

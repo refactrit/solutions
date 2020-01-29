@@ -65,6 +65,17 @@
           data: C:\Program Files (x86)\Parallels\ApplicationServer\
           type: string
           state: present
+      - name: Remove IIS 80 binding
+        win_iis_webbinding:
+          name: Default Web Site
+          protocol: http
+          port: 80
+          state: absent
+      - name: Add IIS 88 binding
+        win_iis_webbinding:
+          name: Default Web Site
+          protocol: http
+          port: 88
   
   - name: Configure RDSH
     hosts: rdsh
@@ -138,7 +149,7 @@
               [string]$DMZAdminPassword,
               [string]$LicenseEmail,
               [string]$LicensePassword,
-              [string]$LicenseKey,
+              [Parameter(Mandatory=$false)][string]$LicenseKey,
               [string[]]$SessionHosts,
               [string[]]$SecureClientGateways,
               [string]$RASGroupName,
@@ -266,7 +277,7 @@
         - "-DMZAdminPassword {{ dmzAdminPassword | quote }}"
         - "-LicenseEmail {{ licenseEmail | quote }}"
         - "-LicensePassword {{ licensePassword | quote }}"
-        - "-LicenseKey {{ licenseKey | quote }}"
+        - "{{ ('-LicenseKey ' + (licenseKey | quote)) if licenseKey else '' }}"
         - "-SessionHosts {{ sessionHosts | join(',') | quote }}"
         - "-SecureClientGateways {{ secureClientGateways | join(',') | quote }}"
         - "-RASGroupName {{ rasGroupName | quote }}"
