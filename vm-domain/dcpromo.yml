@@ -1,0 +1,12 @@
+- name: Domain Controller
+  hosts: dc
+  tasks:
+    - name: Domain
+      win_domain:
+        dns_domain_name: "{{ domainName }}"
+        safe_mode_password: "{{ safeModePassword }}"
+      register: domain_state
+    - name: Reboot
+      win_reboot:
+        reboot_timeout: 1800
+      when: domain_state.reboot_required

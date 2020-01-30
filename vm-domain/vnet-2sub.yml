@@ -1,0 +1,52 @@
+---
+  $schema: >-
+    https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#
+  contentVersion: 1.0.0.0
+  parameters:
+    name:
+      type: string
+      metadata:
+        description: Name of the virtual network
+    location:
+      type: string
+      metadata:
+        description: Location of the deployment of the virtual network
+    addressSpace:
+      type: string
+      metadata:
+        description: Address space of the virtual network
+    subnet1Name:
+      type: string
+      metadata:
+        description: Name of the subnet
+    subnet1AddressSpace:
+      type: string
+      metadata:
+        description: Address space of the subnet
+    subnet2Name:
+      type: string
+      metadata:
+        description: Name of the subnet
+    subnet2AddressSpace:
+      type: string
+      metadata:
+        description: Address space of the subnet
+  variables: {}
+  resources:
+    - name: '[ parameters(''name'') ]'
+      type: Microsoft.Network/virtualNetworks
+      apiVersion: '2018-08-01'
+      location: '[ parameters(''location'') ]'
+      tags: {}
+      properties:
+        addressSpace:
+          addressPrefixes:
+            - '[ parameters(''addressSpace'') ]'
+        subnets:
+          - name: '[ parameters(''subnet1Name'') ]'
+            properties:
+              addressPrefix: '[ parameters(''subnet1AddressSpace'') ]'
+          - name: '[ parameters(''subnet2Name'') ]'
+            properties:
+              addressPrefix: '[ parameters(''subnet2AddressSpace'') ]'
+  outputs: {}

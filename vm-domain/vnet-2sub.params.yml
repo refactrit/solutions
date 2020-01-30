@@ -1,0 +1,19 @@
+---
+  $schema: >-
+    https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#
+  contentVersion: 1.0.0.0
+  parameters:
+    name:
+      value: '{| vars.name |}'
+    location:
+      value: '{| vars.location |}'
+    addressSpace:
+      value: '{| vars.addressSpace |}'
+    subnet1Name:
+      value: '{| vars.subnet1Name |}'
+    subnet1AddressSpace:
+      value: '{| vars.subnet1AddressSpace |}'
+    subnet2Name:
+      value: '{| vars.subnet2Name |}'
+    subnet2AddressSpace:
+      value: '{| vars.subnet2AddressSpace |}'

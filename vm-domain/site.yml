@@ -1,0 +1,15 @@
+---
+all:
+  hosts:
+    dc:
+      ansible_host: "{| findStepById('ip1').result.outputs.ipAddress |}"
+      ansible_port: 5986
+      ansible_user: "{| vars.dcAdminUser |}"
+      ansible_password: "{| vars.dcAdminPassword |}"
+      ansible_connection: winrm
+      ansible_winrm_server_cert_validation: ignore
+      ansible_winrm_transport: credssp
+  children:
+    dc:
+      hosts:
+        dc:
