@@ -6,9 +6,9 @@ parameters:
     type: string
   adminUsername:
     type: string
-  adminPassword:
+  adminSSHKey:
     type: securestring
-  windowsOSVersion:
+  ubuntuOSVersion:
     type: string
   vmSize:
     type: string
@@ -37,12 +37,12 @@ resources:
     location: "[parameters('location')]"
     properties:
       securityRules:
-        - name: default-allow-3389
+        - name: default-allow-22
           properties:
             priority: 1000
             access: Allow
             direction: Inbound
-            destinationPortRange: '3389'
+            destinationPortRange: '22'
             protocol: Tcp
             sourcePortRange: "*"
             sourceAddressPrefix: "*"
@@ -91,12 +91,18 @@ resources:
       osProfile:
         computerName: "[variables('vmName')]"
         adminUsername: "[parameters('adminUsername')]"
-        adminPassword: "[parameters('adminPassword')]"
+        adminPassword: "[parameters('adminSSHKey')]"
+        linuxConfiguration:
+          disablePasswordAuthentication: true
+          ssh:
+            publicKeys:
+              - path: "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]"
+                keyData: "[parameters('adminSSHKey')]"
       storageProfile:
         imageReference:
-          publisher: MicrosoftWindowsServer
-          offer: WindowsServer
-          sku: "[parameters('windowsOSVersion')]"
+          publisher: Canonical
+          offer: UbuntuServer
+          sku: "[parameters('ubuntuOSVersion')]"
           version: latest
         osDisk:
           createOption: FromImage
@@ -107,4 +113,3 @@ outputs:
   ipAddress:
     type: string
     value: "[ reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))).ipAddress ]"
-  
